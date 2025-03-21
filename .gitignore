@@ -5,3 +5,7 @@ venv
 .pypirc
 main.py
 test.py
+pruebas
+simpledataquality.*
+dist
+build

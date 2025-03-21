@@ -7,21 +7,21 @@ Este proyecto implementa un validador de reglas de negocio en Python utilizando 
 - Validación de reglas de negocio almacenadas en la base de datos.
 - Soporte para múltiples tipos de reglas como valores únicos, rangos, expresiones regulares y más.
 - Capacidad para definir funciones personalizadas como validadores.
-- Integración con MSSQL mediante `dataquality`.
+- Integración con MSSQL mediante `mssqldbfacade`.
 
 ## 📦 Instalación
 
 Asegúrate de tener Python 3.8+ instalado y ejecuta:
 
 ```sh
-pip install dataquality
+pip install simpledataquality
 ```
 
 ## 🚀 Uso
 
 ### 1. Inicialización del validador
 ```python
-from business_rules_validator import BusinessRulesValidator
+from simpledataquality.validator import BusinessRulesValidator
 
 validator = BusinessRulesValidator()
 ```

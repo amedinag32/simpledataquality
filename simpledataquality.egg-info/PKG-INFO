@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: simpledataquality
-Version: 1.0.0
+Version: 1.0.1
 Summary: A package implement a basic data quelity check
 Home-page: https://github.com/amedinag32/simpledataquality
 Author: Alan Medina
@@ -29,7 +29,7 @@ Description: # Business Rules Validator
         
         ### 1. Inicialización del validador
         ```python
-        from business_rules_validator import BusinessRulesValidator
+        from simpledataquality.validator import BusinessRulesValidator
         
         validator = BusinessRulesValidator()
         ```

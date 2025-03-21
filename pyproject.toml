@@ -1,0 +1,19 @@
+[project]
+name = "dataquality"
+version = "1.0.0"
+authors = [
+  { name="Alan Medina", email="amedina.escom@hotmail.com" },
+  { name="Camila Vanegas", email="macvanegasri@unal.edu.co" }
+]
+description = "A package implement a basic data quelity check"
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+Homepage = "https://github.com/amedinag32/simpledataquality"
+Issues = "https://github.com/amedinag32/simpledataquality"

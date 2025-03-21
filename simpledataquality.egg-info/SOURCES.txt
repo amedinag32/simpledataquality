@@ -1,0 +1,8 @@
+README.md
+pyproject.toml
+setup.py
+simpledataquality.egg-info/PKG-INFO
+simpledataquality.egg-info/SOURCES.txt
+simpledataquality.egg-info/dependency_links.txt
+simpledataquality.egg-info/requires.txt
+simpledataquality.egg-info/top_level.txt

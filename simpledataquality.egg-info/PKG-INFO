@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: simpledataquality
-Version: 1.0.1
+Version: 1.0.2
 Summary: A package implement a basic data quelity check
 Home-page: https://github.com/amedinag32/simpledataquality
 Author: Alan Medina
@@ -15,14 +15,14 @@ Description: # Business Rules Validator
         - Validación de reglas de negocio almacenadas en la base de datos.
         - Soporte para múltiples tipos de reglas como valores únicos, rangos, expresiones regulares y más.
         - Capacidad para definir funciones personalizadas como validadores.
-        - Integración con MSSQL mediante `dataquality`.
+        - Integración con MSSQL mediante `mssqldbfacade`.
         
         ## 📦 Instalación
         
         Asegúrate de tener Python 3.8+ instalado y ejecuta:
         
         ```sh
-        pip install dataquality
+        pip install simpledataquality
         ```
         
         ## 🚀 Uso

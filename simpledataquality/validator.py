@@ -4,6 +4,7 @@ from numpy import isclose
 from typing import Callable, Dict, Type
 from abc import ABC, abstractmethod
 from mssqldbfacade.facade import DatabaseFacade
+from .publish import Channel
 
 
 # 🎯 PATRÓN STRATEGY: Definir una interfaz común para las reglas
@@ -135,9 +136,29 @@ class ReglaNegocioFactory:
 
 # 🎯 CLASE PRINCIPAL
 class BusinessRulesValidator:
-    def __init__(self, id):
-        self.db = DatabaseFacade()
+    def __init__(self, id, identificador = None):
+        self.db: DatabaseFacade = DatabaseFacade()
+        self.channel: Channel = Channel()
         self.id = id
+        self.name = ""
+        self.get_name()
+        self.identificador = identificador
+
+
+    def get_name(self)-> None:
+        query = f"""
+            SELECT 
+                fd.nombre
+            FROM
+                dq.cat_flujo_datos fd
+            WHERE
+	            fd.id = {self.id}
+        """
+        my_name: DataFrame = self.db.get_data(query=query)
+        
+        if len(my_name)>0:
+            self.name = my_name["nombre"][0]
+        
 
     @staticmethod
     def validar_rango(valor, rango, valor_columna=-1):
@@ -172,7 +193,7 @@ class BusinessRulesValidator:
 
     def cargar_reglas_negocio(self):
         """Carga las reglas de negocio desde la base de datos MSSQL."""
-        query = F"""
+        query = f"""
             SELECT 
                 rn.nombre_columna, 
                 trn.nombre AS tipo_regla, 
@@ -203,4 +224,93 @@ class BusinessRulesValidator:
             if validador and not validador.validar(df, columnas, valor):
                 errores.append(mensaje)
 
+        if len(errores) > 0:
+            self.channel.publish(self.build_error_message(errores))
+        
         return errores
+    
+    
+    def build_error_message(self, errors: list) -> dict:
+        facts = []
+        for error in errors:
+            facts.append({"title": "📌", "value": error})
+        if self.identificador != None:
+            message = {
+                "type": "message",
+                "attachments": [
+                    {
+                        "contentType": "application/vnd.microsoft.card.adaptive",
+                        "content": {
+                            "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+                            "type": "AdaptiveCard",
+                            "version": "1.4",
+                            "body": [
+                                {
+                                    "type": "TextBlock",
+                                    "text": f"📎 **{self.name}**",
+                                    "weight": "Bolder",
+                                    "size": "ExtraLarge",
+                                    "color": "Accent"
+                                },
+                                {
+                                    "type": "TextBlock",
+                                    "text": f"🤖 **Identificador: {self.identificador}**",
+                                    "color": "Attention"
+                                },
+                                
+                                {
+                                    "type": "TextBlock",
+                                    "text": "📋 **Lista de Errores**",
+                                    "weight": "Bolder",
+                                    "size": "Medium"
+                                },
+                                {
+                                    "type": "FactSet",
+                                    "facts": facts,
+                                    "color": "Attention"
+                                },
+                            ],
+                        }
+                    }
+                ]
+            }
+        else:
+            message = {
+                "type": "message",
+                "attachments": [
+                    {
+                        "contentType": "application/vnd.microsoft.card.adaptive",
+                        "content": {
+                            "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+                            "type": "AdaptiveCard",
+                            "version": "1.4",
+                            "body": [
+                                {
+                                    "type": "TextBlock",
+                                    "text": f"📎 **{self.name}**",
+                                    "weight": "Bolder",
+                                    "size": "ExtraLarge",
+                                    "color": "Accent"
+                                },
+                                
+                                {
+                                    "type": "TextBlock",
+                                    "text": "📋 **Lista de Errores**",
+                                    "weight": "Bolder",
+                                    "size": "Medium"
+                                },
+                                {
+                                    "type": "FactSet",
+                                    "facts": facts,
+                                    "color": "Attention"
+                                },
+                            ],
+                        }
+                    }
+                ]
+            }
+        
+        
+        return message   
+        
+        

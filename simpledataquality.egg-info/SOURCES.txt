@@ -2,6 +2,7 @@ README.md
 pyproject.toml
 setup.py
 simpledataquality/__init__.py
+simpledataquality/publish.py
 simpledataquality/validator.py
 simpledataquality.egg-info/PKG-INFO
 simpledataquality.egg-info/SOURCES.txt

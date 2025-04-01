@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='simpledataquality',
-    version='1.0.3',
+    version='1.0.4',
     description='A package implement a basic data quelity check',
     long_description=open('README.md').read(),
     long_description_content_type='text/markdown',
@@ -17,8 +17,8 @@ setup(
     ],
     python_requires='>=3.8',
     install_requires=[
-        "certifi==2025.1.31",
-        "charset-normalizer==3.4.1",
+        "certifi==2024.12.14",
+        "charset-normalizer==3.4.0",
         "greenlet==3.1.1",
         "idna==3.10",
         "mssqldbfacade==1.0.8",

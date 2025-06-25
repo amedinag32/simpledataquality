@@ -5,7 +5,7 @@ from typing import Callable, Dict, Type
 from abc import ABC, abstractmethod
 from mssqldbfacade.facade import DatabaseFacade
 from .publish import Channel
-
+from datetime import datetime
 
 # 🎯 PATRÓN STRATEGY: Definir una interfaz común para las reglas
 class ReglaNegocio(ABC):
@@ -195,6 +195,7 @@ class BusinessRulesValidator:
         """Carga las reglas de negocio desde la base de datos MSSQL."""
         query = f"""
             SELECT 
+                rn.id,
                 rn.nombre_columna, 
                 trn.nombre AS tipo_regla, 
                 rn.valor_regla, 
@@ -208,12 +209,36 @@ class BusinessRulesValidator:
         """
         return self.db.get_data(query=query)
 
+    def guardar_error(self, tbl_reglas_negocio_id: int, fecha_error: str, detalle: str, identificador: str) -> bool:
+        merge_query = f"""
+            MERGE dq.his_reglas_negocio AS target
+            USING(SELECT {tbl_reglas_negocio_id} tbl_reglas_negocio_id, '{fecha_error}' fecha_error, '{detalle}' detalle, '{identificador}' identificador) AS source 
+            ON 
+                source.tbl_reglas_negocio_id = target.tbl_reglas_negocio_id 
+            AND 
+                source.fecha_error = target.fecha_error
+            AND 
+                source.identificador = target.identificador
+            WHEN MATCHED THEN
+                UPDATE
+                    SET
+                        total_reportes = total_reportes + 1
+            WHEN NOT MATCHED THEN
+                INSERT(tbl_reglas_negocio_id, fecha_error, detalle, identificador)
+                VALUES(source.tbl_reglas_negocio_id, source.fecha_error, source.detalle, source.identificador);
+        """
+        # ejecutamo merge
+        self.db.transaction(merge_query)
+    
+    
     def aplicar_reglas(self, df: DataFrame, reglas: DataFrame):
         """Aplica las reglas de negocio usando el patrón Strategy y Factory."""
+        
+        fecha: str = datetime.now().strftime("%Y-%m-%d")
         errores = []
 
         for _, regla in reglas.iterrows():
-            columna, tipo, valor, mensaje = regla
+            id, columna, tipo, valor, mensaje = regla
             columnas = columna.split(",")
 
             if columnas[0] not in df.columns:
@@ -223,13 +248,13 @@ class BusinessRulesValidator:
 
             if validador and not validador.validar(df, columnas, valor):
                 errores.append(mensaje)
+                self.guardar_error(int(id), fecha, mensaje, self.identificador)
 
         if len(errores) > 0:
-            self.channel.publish(self.build_error_message(errores))
+            self.channel.publish(self.build_error_message(errores))            
         
         return errores
-    
-    
+     
     def build_error_message(self, errors: list) -> dict:
         facts = []
         for error in errors:

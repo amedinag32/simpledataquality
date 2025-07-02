@@ -1,24 +1,36 @@
 from requests import post
-from datetime import datetime
-from os import getenv
+import logging
+import traceback
 
+
+# Configuración básica
+logging.basicConfig(
+    level=logging.INFO,  # Nivel mínimo del log: DEBUG, INFO, WARNING, ERROR, CRITICAL
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
+
+logger = logging.getLogger(__name__)
 
 
 # 🎯 PATRÓN STRATEGY: Definir una interfaz común para las reglas
 class Channel:
     """Clase para publicar mensajes en un canal de teams"""
-    def __init__(self, webhook_url: str = getenv("TEAMS_CHANEL_WEBHOOK_URL")):
+    def __init__(self, webhook_url: str):
         self.webhook_url = webhook_url
     
     def publish(self, message: dict):
-        # Enviar el mensaje
-        response = post(self.webhook_url, json=message)
-        
-        # Verificar respuesta
-        if response.status_code == 200:
-            print("✅ Mensaje publicado correctamente en el canal de Teams 🚀")
+        if self.webhook_url is None or self.webhook_url == "":
+            logger.error("Without Webhook asociate")
         else:
-            print(f"❌ Error {response.status_code}: {response.text}")
+            # Enviar el mensaje
+            response = post(self.webhook_url, json=message)
+            
+            # Verificar respuesta
+            if response.status_code == 200:
+                logger.info("✅ Mensaje publicado correctamente en el canal de Teams 🚀")
+            else:
+                logger.error(f"❌ Error {response.status_code}: {response.text}")
         
 
 # Mensaje personalizable con TODO

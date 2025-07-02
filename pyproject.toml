@@ -1,6 +1,6 @@
 [project]
 name = "dataquality"
-version = "1.0.5"
+version = "1.0.6"
 authors = [
   { name="Alan Medina", email="amedina.escom@hotmail.com" },
   { name="Camila Vanegas", email="macvanegasri@unal.edu.co" }

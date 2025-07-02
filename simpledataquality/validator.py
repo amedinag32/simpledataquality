@@ -6,6 +6,17 @@ from abc import ABC, abstractmethod
 from mssqldbfacade.facade import DatabaseFacade
 from .publish import Channel
 from datetime import datetime
+import logging
+import traceback
+
+# Configuración básica
+logging.basicConfig(
+    level=logging.INFO,  # Nivel mínimo del log: DEBUG, INFO, WARNING, ERROR, CRITICAL
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
+
+logger = logging.getLogger(__name__)
 
 # 🎯 PATRÓN STRATEGY: Definir una interfaz común para las reglas
 class ReglaNegocio(ABC):
@@ -138,19 +149,24 @@ class ReglaNegocioFactory:
 class BusinessRulesValidator:
     def __init__(self, id, identificador = None):
         self.db: DatabaseFacade = DatabaseFacade()
-        self.channel: Channel = Channel()
         self.id = id
         self.name = ""
+        self.envio = False
+        self.channel_name = None
+        self.webhook = None
         self.get_name()
         self.identificador = identificador
+        self.channel: Channel = Channel(self.webhook)
 
 
     def get_name(self)-> None:
         query = f"""
             SELECT 
-                fd.nombre
+                fd.nombre, chan.webhook, fd.envio, chan.nombre channel_name
             FROM
                 dq.cat_flujo_datos fd
+            INNER JOIN
+                dq.cat_canal_teams chan ON chan.id = fd.cat_canal_teams_id
             WHERE
 	            fd.id = {self.id}
         """
@@ -158,6 +174,10 @@ class BusinessRulesValidator:
         
         if len(my_name)>0:
             self.name = my_name["nombre"][0]
+            self.webhook = my_name["webhook"][0]
+            self.envio = my_name["envio"][0]
+            self.channel_name = my_name["channel_name"][0]
+            
         
 
     @staticmethod
@@ -209,6 +229,23 @@ class BusinessRulesValidator:
         """
         return self.db.get_data(query=query)
 
+    def fue_enviado(self, tbl_reglas_negocio_id: int, fecha_error: str, identificador: str) -> bool:
+        if self.db.get_data(f"""
+            SELECT 
+                * 
+            FROM 
+                dq.his_reglas_negocio 
+            WHERE 
+                tbl_reglas_negocio_id = {tbl_reglas_negocio_id} 
+            AND 
+                fecha_error = '{fecha_error}' 
+            AND 
+                identificador = '{identificador}';"""
+        ).empty:
+            return False
+        else:
+            return True
+    
     def guardar_error(self, tbl_reglas_negocio_id: int, fecha_error: str, detalle: str, identificador: str) -> bool:
         merge_query = f"""
             MERGE dq.his_reglas_negocio AS target
@@ -251,7 +288,17 @@ class BusinessRulesValidator:
                 self.guardar_error(int(id), fecha, mensaje, self.identificador)
 
         if len(errores) > 0:
-            self.channel.publish(self.build_error_message(errores))            
+            if self.envio:
+                try:
+                    if not self.fue_enviado(int(id), fecha, self.identificador):
+                        self.channel.publish(self.build_error_message(errores))            
+                    else:
+                        logging.info(("Mensaje ya enviado anteriormente: " + str(id) + " - " + fecha + " - " + self.identificador))
+                except Exception as e:
+                    logging.error(e)
+            else:
+                logging.info("Tipo de mensaje sin publicacion, errores:")
+                logging.error(errores)
         
         return errores
      

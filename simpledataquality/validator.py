@@ -285,13 +285,13 @@ class BusinessRulesValidator:
 
             if validador and not validador.validar(df, columnas, valor):
                 errores.append(mensaje)
-                self.guardar_error(int(id), fecha, mensaje, self.identificador)
 
         if len(errores) > 0:
             if self.envio:
                 try:
                     if not self.fue_enviado(int(id), fecha, self.identificador):
-                        self.channel.publish(self.build_error_message(errores))            
+                        self.channel.publish(self.build_error_message(errores)) 
+                        self.guardar_error(int(id), fecha, mensaje, self.identificador)           
                     else:
                         logging.info(("Mensaje ya enviado anteriormente: " + str(id) + " - " + fecha + " - " + self.identificador))
                 except Exception as e:
